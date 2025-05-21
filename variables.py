@@ -8,9 +8,9 @@ USD_tx_threshold = 20000000000000000000000000000 #not active
 single_address_input = True
 
 entities = [
-#  {'base_contract_address': '0x8B4aa04E9642b387293cE6fFfA42715a9cd19f3C',
+#  {'base_contract_address': 'your contract address',
 #     'entity_name': 'Maven 11',
-#     'entity_tx_hash': '0x066ddcf62bf689703ce2168bb2a5e4138bde470d4577c99bb88c1da4c65ebcde',
+#     'entity_tx_hash': 'your tx hash',
 #     'historicalUSD': 100000, #not being used
 #     'entities_to_include': {
 #         'incoming_entities_to_include': ['Maven 11','maven-11', 'Maple Loan Proxy'],
@@ -21,9 +21,9 @@ entities = [
 #     'AOM_ballpark': 80000000
 #     },
 
-#  {'base_contract_address': '0xa8C37D20D9632CE2E6FFF4B027aF77e5C4e23E1f',
-#     'entity_name': 'Orthogonal Trading',
-#     'entity_tx_hash': '0x69b6586785598ca22ac267981a1d2a6a7ddcaabe99873be8141e78c7f37b1b2f',
+#  {'base_contract_address': 'your contract address',
+#     'entity_name': 'your entity name',
+#     'entity_tx_hash': 'your tx hash',
 #     'historicalUSD': 100000, #not being used,
 #     'entities_to_include': {
 #         'incoming_entities_to_include': ['Orthogonal Trading','orthogonal-trading', 'Maple Loan Proxy'],
@@ -35,8 +35,8 @@ entities = [
 #     },
 
     # {
-    # 'base_contract_address': '0x023Db56966858d139FE6406Ae927275490715a3a',
-    # 'entity_name': 'Portofino',
+    # 'base_contract_address': 'your contract address',
+    # 'entity_name': 'your entity name',
     # 'root_filters': {
     #     'toIsContract': False,
     #     'fromAddressArkhamLabel': ['Maple Loan Proxy', '"Maven11 WETH Pool'],
@@ -73,8 +73,8 @@ entities = [
     },
 
     # {
-    # 'base_contract_address': '0x2cB5c20309B2DbfDda758237f20c94b5F72d0331',
-    # 'entity_name': 'Auros Global',
+    # 'base_contract_address': 'your contract address',
+    # 'entity_name': 'your entity name',
     # 'root_filters': {
     #     'toIsContract': False,
     #     'fromAddressArkhamLabel': None,
