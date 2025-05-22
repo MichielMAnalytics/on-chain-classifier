@@ -1,4 +1,3 @@
-
 import requests
 import pandas as pd
 import requests
@@ -868,13 +867,17 @@ def process_signalised_address(row, signal_identified_pairs, identified_addresse
 
 
 def get_and_log_env_variables(logger):
-    env_variables = ['START_FROM_STATE', 'RUNNING_IN_ACI', 'ACTIVE_PROTOCOL_SIGNAL','CALL_SWARM']
+    env_vars = ['START_FROM_STATE', 'RUNNING_IN_ACI', 'ACTIVE_PROTOCOL_SIGNAL','CALL_SWARM']
     env_values = {}
 
-    for var in env_variables:
-        value = os.environ.get(var, 'False').lower() == 'true'  # Default is 'False' if the env variable is not set
-        logger.info(f"{var} equals {value}")
-        env_values[var] = value
+    # Convert 'true'/'false' environment variables to actual boolean values
+    for var in env_vars:
+        if os.environ.get(var) is not None:
+            value_str = os.environ.get(var, 'False')
+            value = value_str.lower() == 'true'
+            env_values[var] = value
+        else:
+            env_values[var] = False
 
     return env_values
 

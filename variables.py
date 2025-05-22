@@ -56,7 +56,7 @@ entities = [
     'base_contract_address': '0xEa1f2EA82faf44cbe2950322d094A7202ec8499E',
     'entity_tx_hash': '0x2741af0abe2dbf0cb2eb3bdf8e4aecc4d7023d65a2f20414ef8e629e33116106',
     'historicalUSD': 100000, #not being used,
-    'entity_name': None,
+    'entity_name': 'Unknown Entity',
     'root_filters': {
         'toIsContract': False,
         'fromAddressArkhamLabel': None,

@@ -16,8 +16,16 @@ def get_config():
         'api_key_debank': os.getenv('DEBANK_API_KEY', None),
         'chat_ID': os.getenv('CHAT_ID', None),
         'bot_token': os.getenv('BOT_TOKEN', None),
-        'CALL_SWARM': os.getenv('CALL_SWARM', 'False').lower() == 'true'
+        'CALL_SWARM': os.getenv('CALL_SWARM', 'False')
     }
+    
+    # Process CALL_SWARM to convert string to boolean
+    call_swarm_value = config_values['CALL_SWARM']
+    if call_swarm_value is not None:
+        config_values['CALL_SWARM'] = call_swarm_value.lower() == 'true'
+    else:
+        config_values['CALL_SWARM'] = False
+        
     return config_values
 
 
