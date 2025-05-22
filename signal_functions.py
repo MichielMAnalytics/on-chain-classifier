@@ -9,7 +9,7 @@ from dateutil.tz import tzutc
 
 from settings import get_config
 import requests
-from settings import url_transfers, url_coingecko, get_address_history_url, no_of_days_ago_s1 ,num_std_dev_S6a_d, num_std_dev_S6b_w, S5_relative_threshold
+from settings import url_transfers, url_coingecko, get_address_history_url, no_of_days_ago_s1 ,num_std_dev_S6a_d, num_std_dev_S6b_w, S5_relative_threshold, S2_USD_THRESHOLD
 
 config_values = get_config()
 api_key = config_values['api_key']
@@ -145,8 +145,8 @@ def S2_interaction_new_protocol(df, tx, recent_tx_threshold=2):
    
         # Check for historicalUSD value
         historical_usd = tx.get('historicalUSD')
-        if historical_usd is None or not isinstance(historical_usd, (int, float)) or historical_usd <= 0:
-            logger.info("S2_interaction_new_protocol: historicalUSD is missing, not a number, or not greater than 0. Skipping signal.")
+        if historical_usd is None or not isinstance(historical_usd, (int, float)) or historical_usd <= S2_USD_THRESHOLD:
+            logger.info(f"S2_interaction_new_protocol: historicalUSD is missing, not a number, or not greater than {S2_USD_THRESHOLD}. Skipping signal.")
             return False, None, False
 
         # Extract entity info from the current transaction

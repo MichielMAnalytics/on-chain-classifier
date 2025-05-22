@@ -430,7 +430,7 @@ def save_addresses(all_identified_addresses,status=None):
     # Call the function to save addresses
     try:
         append_addresses_to_csv(addresses_to_save)
-        logger.info("Successfully appended addresses to the CSV.")
+        logger.info("Successfully appended addresses")
     except Exception as e:
         logger.error(f"Error while appending addresses to the CSV: {e}")
 
@@ -868,7 +868,7 @@ def process_signalised_address(row, signal_identified_pairs, identified_addresse
 
 
 def get_and_log_env_variables(logger):
-    env_variables = ['START_FROM_STATE', 'RUNNING_IN_ACI', 'ACTIVE_PROTOCOL_SIGNAL']
+    env_variables = ['START_FROM_STATE', 'RUNNING_IN_ACI', 'ACTIVE_PROTOCOL_SIGNAL','CALL_SWARM']
     env_values = {}
 
     for var in env_variables:
@@ -929,7 +929,7 @@ def get_protocol_balances(address):
             raise Exception(f"API request failed with status code {response.status_code}: {response.text}")
     else:
         # If ACTIVE_PROTOCOL_SIGNAL is not 'True', return an empty dictionary
-        logger.info("ACTIVE_PROTOCOL_SIGNAL NOT set to True. returning empty dictonary...")
+        #logger.info("ACTIVE_PROTOCOL_SIGNAL NOT set to True. returning empty dictonary...")
         return {}
     
 

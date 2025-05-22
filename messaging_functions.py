@@ -90,16 +90,16 @@ def signal_s3_value(value):
     return message
     
 def signal_s4_value(value):
-    new_contract, new_arkham_id, contract, arkham_id = value
+    is_new_exchange, exchange_name = value # Unpack 2 values
     message = ""
-    if new_contract and new_arkham_id:
-        message = f"The address is interacting with a new exchange {contract} and a new entity {arkham_id}."
-    elif new_contract:
-        message = f"The address is interacting with a new exchange {contract}."
-    elif new_arkham_id:
-        message = f"The address is interacting with a new Entity {arkham_id}."
+    if is_new_exchange:
+        # Based on the signal generation logic, is_new_exchange will be True when this function is called.
+        message = f"The address is interacting with a new exchange: {exchange_name}."
     else:
-        message = "The address is not interacting with any new exchanges or entities"
+        # This path should ideally not be reached if the signal is only added when is_new_exchange is True.
+        # Adding a log for unexpected cases.
+        logger.warning("signal_s4_value called with is_new_exchange as False, which is unexpected.")
+        message = "Interaction with a new exchange was flagged, but details are inconsistent."
     return message
 
 def signal_s5a_value(value, signal_row, entities):

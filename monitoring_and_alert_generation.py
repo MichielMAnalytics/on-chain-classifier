@@ -9,7 +9,7 @@ import json
 import os
 from variables import entities
 from supporting_functions import add_helper_columns, get_extra_transactions, find_entity_by_name, convert_date_to_unix_milliseconds, process_signalised_address, get_protocol_balances
-from settings import get_config, headers, url_transfers, sleep_time, usd_threshold, limit
+from settings import get_config, headers, url_transfers, sleep_time, usd_threshold, limit, CALL_SWARM, SWARM_EVALUATE_URL
 from signal_functions import *
 from messaging_functions import *
 import logging
@@ -19,6 +19,40 @@ config_values = get_config()
 api_key = config_values['api_key']
 bot_token = config_values['bot_token'] 
 chat_ID = config_values['chat_ID']
+
+
+
+def trigger_swarm_evaluation(transaction_hash, signal_type, signal_value, signal_row_for_s5, entities_for_s5):
+    """
+    Constructs the reason and calls the Swarm evaluation endpoint.
+    """
+    if not CALL_SWARM:
+        return
+
+    try:
+        # Get the human-readable signal message using the same logic as construct_alert_message
+        transform_func = signal_value_transforms.get(signal_type, lambda x: str(x))
+        if signal_type in ['S5a Daily Cumulative Volume Exceeded', 'S5b Daily Absolute Volume Exceeded']:
+            # For S5 signals, we need to pass the signal_row and entities to the transform function
+            # We need to ensure signal_row_for_s5 and entities_for_s5 are correctly passed or constructed here
+            # For now, assuming signal_row_for_s5 and entities_for_s5 are passed correctly
+            reason_message = transform_func(signal_value, signal_row_for_s5, entities_for_s5)
+        else:
+            reason_message = transform_func(signal_value)
+        
+        reason = f"{signal_type}: {reason_message}"
+
+        params = {
+            'transaction_hash': transaction_hash,
+            'reason': reason
+        }
+        response = requests.get(SWARM_EVALUATE_URL, params=params)
+        response.raise_for_status() # Raise an exception for HTTP errors
+        logger.info(f"Successfully triggered Swarm evaluation for {transaction_hash}. Response: {response.json()}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error calling Swarm evaluation for {transaction_hash}: {e}")
+    except Exception as e:
+        logger.error(f"An unexpected error occurred in trigger_swarm_evaluation for {transaction_hash}: {e}")
 
 
 
@@ -155,7 +189,7 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
             # Filter out the transactions that already exist in df_all_transactions
             df_new_txs = df_new_txs[~df_new_txs['transactionHash'].isin(df_all_transactions['transactionHash'])]
 
-            logger.info(f"Timestamps of transactions after filtering for address {address}: {df_new_txs['blockTimestamp'].to_list()}")
+            #logger.info(f"Timestamps of transactions after filtering for address {address}: {df_new_txs['blockTimestamp'].to_list()}")
 
             # If there are still any new transactions after filtering, append them to df_all_transactions and update the timestamp
             if not df_new_txs.empty:
@@ -251,6 +285,8 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                             # and 'fromAddress.arkhamEntity.name', 'fromAddress.arkhamEntity.type' are empty if tx_direction equals 'IN'
                             process_signalised_address(row, signal_identified_pairs, identified_addresses, last_seen_tx_timestamps)
 
+                            trigger_swarm_evaluation(row['transactionHash'], 'S1 Fresh Wallet', signal_S1, row, entities)
+
 #END########################get signal from S1_fresh_wallet and append it to df_signals##################################################################
 
 #BEGIN######################get signals from S2_interaction_new_protocol and append them to df_signals###################################################
@@ -296,7 +332,10 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                             
                         except Exception as e:
                             logging.exception('An error occurred while sending telegram message:')
-                        #END########################get signals from S2_interaction_new_protocol and append them to df_signals###################################################
+
+                        trigger_swarm_evaluation(row['transactionHash'], 'S2 Interaction New Protocol', signal_S2, row, entities)
+
+#END######################get signals from S2_interaction_new_protocol and append them to df_signals###################################################
 
 #BEGIN######################get signals from S3_interaction_new_crypto and append them to df_signals###################################################
                     if row['historicalUSD'] > usd_threshold:
@@ -340,6 +379,9 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                                 
                             except Exception as e:
                                 logging.exception('An error occurred while sending telegram message:')
+
+                            trigger_swarm_evaluation(row['transactionHash'], 'S3 Interaction New Crypto', signal_S3, row, entities)
+
 #END######################get signals from S3_interaction_new_crypto and append them to df_signals###################################################
 
 #BEGIN######################get signals from S4_interaction_new_exchange and append them to df_signals###################################################
@@ -382,6 +424,8 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                                 
                             except Exception as e:
                                 logging.exception('An error occurred while sending telegram message:')
+
+                            trigger_swarm_evaluation(row['transactionHash'], 'S4 Interaction New Exchange', signal_S4, row, entities)
                     
 #END######################get signals from S4_interaction_new_exchange and append them to df_signals###################################################
 
@@ -437,6 +481,8 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                                 except Exception as e:
                                     logging.exception('An error occurred while sending telegram message:')
 
+                                trigger_swarm_evaluation(row['transactionHash'], 'S5a Daily Cumulative Volume Exceeded', signal_S5a, row, entities)
+
     #END######################get signals from S5a_daily_volume_alert_cum and append them to df_signals###################################################
 
 
@@ -486,6 +532,8 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                                     
                                 except Exception as e:
                                     logging.exception('An error occurred while sending telegram message:')
+
+                                trigger_swarm_evaluation(row['transactionHash'], 'S5b Daily Absolute Volume Exceeded', signal_S5b, row, entities)
 
                                 # Before adding anything to signal_identified_pairs and last_seen_tx_timestamps,
                                 # Check if the 'toAddress.arkhamEntity.name' and 'toAddress.arkhamEntity.type' are empty if tx_direction equals 'OUT'
@@ -539,6 +587,8 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                                     
                                 except Exception as e:
                                     logging.exception('An error occurred while sending telegram message:')
+
+                                trigger_swarm_evaluation(row['transactionHash'], 'S6a Daily Frequency Change', signal_S6a, row, entities)
                         
 #END######################get signals from S6a_d_freq_change and append them to df_signals###################################################
 
@@ -587,6 +637,8 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                                     
                                 except Exception as e:
                                     logging.exception('An error occurred while sending telegram message:')
+
+                                trigger_swarm_evaluation(row['transactionHash'], 'S6b Weekly Frequency Change', signal_S6b, row, entities)
             
 #END######################get signals from S6b_w_freq_change and append them to df_signals###################################################
 
@@ -631,6 +683,8 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                                 
                             except Exception as e:
                                 logging.exception('An error occurred while sending telegram message:')
+
+                            trigger_swarm_evaluation(row['transactionHash'], 'S7 protocol activity', signal_S7, row, entities)
 #END######################get signals from S7_LP_token_traded and append them to df_signals###################################################
 
 
@@ -674,20 +728,22 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
                             
                         except Exception as e:
                             logging.exception('An error occurred while sending telegram message:')
+
+                        trigger_swarm_evaluation(row['transactionHash'], 'S8 LP token traded', signal_S8, row, entities)
 #END######################get signals from S8_LP_token_traded and append them to df_signals###################################################
                     #Add the addresses identified by the signalised identification process to identified_addresses and df_all_transactions
                     #get all transactions for the signalised addresses
                     try:       
                         new_transactions_signalised = get_extra_transactions(current_entity_name,signal_identified_pairs, filter_from_date)
                         logger.info("\n")
-                        logger.info("the shape of new_transactions_signalised is %s", new_transactions_signalised.shape)
+                        #logger.info("the shape of new_transactions_signalised is %s", new_transactions_signalised.shape)
                         #concat the main df with the new df and drop duplicates 
                         combined_df_signalised = pd.concat([df_all_transactions, new_transactions_signalised])
-                        logger.info("the shape of combined_df is %s", combined_df_signalised.shape)
+                        #logger.info("the shape of combined_df is %s", combined_df_signalised.shape)
                         combined_df_signalised.drop_duplicates(subset=['id', 'tx_direction'], keep='first', inplace=True)
                         #store as main df
                         df_all_transactions = combined_df_signalised
-                        logger.info("the shape of df_all_transactions is %s", df_all_transactions.shape)
+                        logger.info("Cumulative number of transactions: %s", df_all_transactions.shape[0])
 
                     except TypeError as te:
                         logger.error(f"A TypeError occurred: {str(te)}")
@@ -729,7 +785,7 @@ def monitor_transactions(df_all_transactions, identified_addresses, df_signals, 
 
             #logger.info("Updated state:")
             #logger.info("last_seen_tx_timestamps: %s", last_seen_tx_timestamps)
-            logger.info(f"df_all_transactions shape: {df_all_transactions.shape}")  # Print the shape of the DataFrame
+            logger.info(f"df_all_transactions shape: {df_all_transactions.shape[0]}")  # Print the shape of the DataFrame
 
         else:
             #logger.info(f"No new transactions found for address {address}.")

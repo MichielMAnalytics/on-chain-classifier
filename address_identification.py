@@ -239,7 +239,9 @@ def address_identification(entity_name, entity_root,initial_transaction_hash,ent
 
     # Stack for processing addresses, contains pairs of address and associated transaction hash
     stack_addresses = [(entity_root, initial_transaction_hash, entity_name)]
-    all_exchange_deposit_addresses = set() 
+    all_exchange_deposit_addresses = set()
+
+    invalid_addresses_to_filter = ['0x4200000000000000000000000000000000000006','0x0000000000001fF3684f28c67538d4D072C22734', '0x0000000000000000000000000000000000000000']
 
     while stack_addresses:
         current_address, transaction_hash, current_entity_name = stack_addresses.pop()  # get (and remove) the address at the end of the stack
@@ -255,13 +257,18 @@ def address_identification(entity_name, entity_root,initial_transaction_hash,ent
         found_tuples = list(set(found_tuples)) # Remove duplicates from found_tuples
         
         # Add the new unique addresses to the stack_addresses list
-        new_tuples = [tuple for tuple in found_tuples if tuple[0] not in processed_addresses and tuple[0] not in (addr for addr, _, _, _ in identified_addresses)]
+        new_tuples = [
+            t for t in found_tuples
+            if t[0] not in processed_addresses
+            and t[0] not in (addr for addr, _, _, _ in identified_addresses)
+            and t[0] not in invalid_addresses_to_filter
+        ]
         stack_addresses.extend(new_tuples)
 
         # Add the new unique addresses to the identified_addresses list
-        for tuple in new_tuples:
-            if tuple[0] not in (addr for addr, _, _, _ in identified_addresses):
-                identified_tuple = (tuple[0], tuple[1], tuple[2], "general_identification_method")
+        for current_tuple in new_tuples:
+            if current_tuple[0] not in (addr for addr, _, _, _ in identified_addresses):
+                identified_tuple = (current_tuple[0], current_tuple[1], current_tuple[2], "general_identification_method")
                 identified_addresses.append(identified_tuple)
 
         # Save state after processing each address and updating lists
@@ -299,15 +306,17 @@ def address_identification(entity_name, entity_root,initial_transaction_hash,ent
     df_all_transactions = combined_df
     logger.info("the shape of df_all_transactions is %s", df_all_transactions.shape)
 
-    for address, tx_hashes in previous_senders.items():
-        if isinstance(tx_hashes, dict):  # If tx_hashes is a dictionary
-            for nested_address, nested_tx_hash in tx_hashes.items(): 
-                if nested_address not in (addr for addr, _, _, _ in identified_addresses): 
+    for address_key, tx_hashes_val in previous_senders.items():
+        if isinstance(tx_hashes_val, dict):  # If tx_hashes is a dictionary
+            for nested_address, nested_tx_hash in tx_hashes_val.items(): 
+                if nested_address not in (addr for addr, _, _, _ in identified_addresses) and \
+                   nested_address not in invalid_addresses_to_filter: 
                     identified_tuple = (nested_address, nested_tx_hash, entity_name, "exchange_deposit_identification_method")
                     identified_addresses.append(identified_tuple) 
         else: # If tx_hashes is not a dictionary, it should be a single transaction hash string.
-            if address not in (addr for addr, _, _, _ in identified_addresses): 
-                identified_tuple = (address, tx_hashes, entity_name, "exchange_deposit_identification_method")
+            if address_key not in (addr for addr, _, _, _ in identified_addresses) and \
+               address_key not in invalid_addresses_to_filter: 
+                identified_tuple = (address_key, tx_hashes_val, entity_name, "exchange_deposit_identification_method")
                 identified_addresses.append(identified_tuple)
 
     logger.info("\n")

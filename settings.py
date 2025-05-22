@@ -15,13 +15,15 @@ def get_config():
         'api_key': os.getenv('API_KEY', None),
         'api_key_debank': os.getenv('DEBANK_API_KEY', None),
         'chat_ID': os.getenv('CHAT_ID', None),
-        'bot_token': os.getenv('BOT_TOKEN', None)
+        'bot_token': os.getenv('BOT_TOKEN', None),
+        'CALL_SWARM': os.getenv('CALL_SWARM', 'False').lower() == 'true'
     }
     return config_values
 
 
 config_values = get_config()
 api_key = config_values['api_key']
+CALL_SWARM = config_values['CALL_SWARM'] # Make it available directly
 
 # set up the API endpoint URL
 url_transfers = 'https://api.arkhamintelligence.com/transfers'
@@ -79,6 +81,12 @@ num_std_dev_S6b_w = 3
 #For S5a and b the threshold, relative to the AOM_ballpark, of a transaction value to pass to generate a trigger. 
 S5_relative_threshold = 0.15 #0.05 * 40M = 2M
 
+#For S2 the minimum USD value for a transaction to be considered
+S2_USD_THRESHOLD = 100
+
 #no. of transactions processed at a time
 limit = 1000
+
+# URL for the Swarm evaluation endpoint
+SWARM_EVALUATE_URL = 'http://localhost:8502/trigger_revoker'
 

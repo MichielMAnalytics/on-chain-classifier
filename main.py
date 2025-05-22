@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
             # Append data to the cumulative dataframe and list
             logger.info(f"Appending data for entity: {entity_name}")
-            all_transactions_df = all_transactions_df.append(df_all_transactions, ignore_index=True)
+            all_transactions_df = pd.concat([all_transactions_df, df_all_transactions], ignore_index=True)
             all_identified_addresses.extend(identified_addresses)
 
             #delete df_all_transactions to save memory
